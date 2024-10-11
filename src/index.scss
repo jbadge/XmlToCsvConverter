@@ -1,15 +1,5 @@
 :root {
   font: 16px / 1 sans-serif;
-
-  // SDG brand colors
-  --asphalt: #2f3737;
-  --bright-sky: #80ced2;
-  --lime: #b1d133;
-  --night-sky: #85577e;
-  --sand: #f7f0da;
-  --sea: #5a9090;
-  --sun: #d5562b;
-  --tangerine: #f99d1b;
 }
 
 html {
@@ -19,4 +9,67 @@ html {
 body {
   margin: 0;
   min-height: 100%;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  margin-top: 3rem;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+}
+
+h1 {
+  text-align: center;
+}
+
+.input-group {
+  margin: 15px 0;
+}
+
+input[type='text'],
+input[type='number'],
+input[type='file'] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.error {
+  color: red;
+  text-align: center;
+}
+
+.submit-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+.fa.fa-heart {
+  color: rgba(255, 0, 0, 0.581);
+}
+
+footer {
+  position: relative;
+  height: 64px;
+  margin-top: 128px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

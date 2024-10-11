@@ -5,6 +5,7 @@ const XmlToCsv = () => {
   const [numColumns, setNumColumns] = useState<number>(0)
   const [columnNames, setColumnNames] = useState<string[]>([])
   const [csvFileName, setCsvFileName] = useState<string>('output.csv')
+  const [fileContent, setFileContent] = useState<string | null>(null)
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -14,30 +15,60 @@ const XmlToCsv = () => {
 
     try {
       const text = await file.text()
+      setFileContent(text)
+      setError(null)
+    } catch (err) {
+      setError('Error reading the file: ' + (err as Error).message)
+    }
+  }
 
-      const regex = /<Record[^>]*>(.*?)<\/Record>/g
-      let match
+  const handleSubmit = () => {
+    if (!fileContent) {
+      setError('Please select an XML file.')
+      return
+    }
 
-      // Prepare the output CSV
+    // Normalize the column names
+    const normalizedColumnNames = columnNames.map(
+      (name) =>
+        name
+          .trim()
+          .replace(/\s+/g, '') // Remove spaces
+          .replace(/([A-Z])/g, (match) => `_${match.toLowerCase()}`) // Convert to snake_case
+    )
+
+    console.log(normalizedColumnNames)
+    try {
+      // Create a case-insensitive regex for record matching
+      const regexPattern = `<Record[^>]*(${normalizedColumnNames.map((name) => `${name}="([^"]*)"`).join('[^>]*')})[^>]*\\/?>`
+      const regex = new RegExp(regexPattern, 'gi') // Use 'gi' for global and case-insensitive
+
+      console.log('Dynamic Regex for record matching:', regex)
+
+      let match: RegExpExecArray | null
       const output: string[] = []
-      const headers = columnNames.join(',') // Join specified column names
+      const headers = normalizedColumnNames.join(',')
       output.push(headers)
 
-      while ((match = regex.exec(text)) !== null) {
-        const recordContent = match[1]
+      while ((match = regex.exec(fileContent)) !== null) {
+        if (match) {
+          const values: string[] = normalizedColumnNames.map((column) => {
+            // Use a case-insensitive regex to match the attributes
+            const valueMatch = new RegExp(`${column}="([^"]*)"`, 'i').exec(
+              match![0]
+            )
+            return valueMatch && valueMatch[1] ? valueMatch[1] : ''
+          })
 
-        // Extract the values for the specified column names
-        const values: string[] = columnNames.map((column) => {
-          const valueMatch = new RegExp(`${column}="([^"]*)"`).exec(
-            recordContent
-          )
-          return valueMatch ? valueMatch[1] : '' // Fallback to empty string if not found
-        })
-
-        output.push(values.join(',')) // Join values for this record
+          output.push(values.join(','))
+        }
       }
 
-      // Generate CSV for download
+      if (output.length === 1) {
+        setError('No matching data found in the XML for the specified columns.')
+        return
+      }
+
       const blob = new Blob([output.join('\n')], {
         type: 'text/csv;charset=utf-8;',
       })
@@ -56,22 +87,22 @@ const XmlToCsv = () => {
   const handleColumnCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const count = parseInt(e.target.value, 10)
     setNumColumns(count)
-    setColumnNames(Array(count).fill('')) // Initialize column names array
+    setColumnNames(Array(count).fill(''))
   }
 
   const handleColumnNameChange = (index: number, value: string) => {
     const newNames = [...columnNames]
-    newNames[index] = value
+    newNames[index] = value // Store as-is for now
     setColumnNames(newNames)
   }
 
   return (
-    <div>
-      <h1>Generic XML to CSV Converter</h1>
+    <div className="container">
+      <h1>XML to CSV Converter</h1>
       <input type="file" accept=".xml" onChange={handleFileChange} />
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
 
-      <div>
+      <div className="input-group">
         <label>
           How many columns would you like to extract?
           <input
@@ -84,7 +115,7 @@ const XmlToCsv = () => {
       </div>
 
       {Array.from({ length: numColumns }, (_, index) => (
-        <div key={index}>
+        <div className="input-group" key={index}>
           <label>
             Column {index + 1} name:
             <input
@@ -96,7 +127,7 @@ const XmlToCsv = () => {
         </div>
       ))}
 
-      <div>
+      <div className="input-group">
         <label>
           CSV File Name:
           <input
@@ -106,6 +137,10 @@ const XmlToCsv = () => {
           />
         </label>
       </div>
+
+      <button className="submit-button" onClick={handleSubmit}>
+        Convert to CSV
+      </button>
     </div>
   )
 }
